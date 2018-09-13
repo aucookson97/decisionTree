@@ -1,7 +1,7 @@
 import csv
+import sys
 
 class BoardState():
-
 
     def __init__(self, board1D):
         self.winner = board1D[len(board1D)-1]
@@ -39,8 +39,12 @@ def loadTrainData(filename):
     return data
 
 if __name__== "__main__":
-    data = loadTrainData("trainDataSet.csv")
+    data = []
+    try:
+        data = loadTrainData("trainDataSet.csv")
+    except IOError:
+        print 'Error: Could not find CSV File!'
+        sys.exit(1)
 
-    print len(data)
-    #for i in range(10):
-     #   data[i].display()
+    print 'Successfully Loaded {} Data Entries'.format(len(data))
+ 
