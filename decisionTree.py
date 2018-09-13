@@ -1,3 +1,4 @@
+from sklearn.tree import DecisionTreeClassifier
 import csv
 import sys
 
@@ -6,7 +7,21 @@ class FeatureFinder():
     # Which Player Has a Piece in the Bottom Left Position
     def bottomLeft(self, state):
         return state.board[0][0]
-    
+
+    # score of center pieces
+    def numCenterPieces(self, state):
+        player1count = 0
+        player2count = 0
+        for c in range(2,5):
+            for r in range(state.rows):
+                if state.board[c][r] == 1:
+                    player1count += 1
+                if state.board[c][r] == 2:
+                    player2count += 1
+        return player1count - player2count
+
+    def centerPiece(selfself, state):
+        return state.board[3][0]
 
 class BoardState():
 
@@ -21,14 +36,14 @@ class BoardState():
             self.board.append([])
             for r in range(self.rows):
                 index = c * self.rows + r
-                self.board[c].append(board1D[index])
+                self.board[c].append(int(board1D[index]))
 
     def display(self):
         print ""
         for r in range(self.rows):
             line = ""
             for c in range(self.columns):     
-                line += self.board[c][self.rows - r - 1] + " "
+                line += str(self.board[c][self.rows - r - 1]) + " "
             print line
         print "\n\tWinner: {}".format(self.winner)
     
@@ -57,5 +72,7 @@ if __name__== "__main__":
 
     finder = FeatureFinder()
 
-    data[0].display()
+    data[19].display()
     print finder.bottomLeft(data[0])
+    print finder.numCenterPieces(data[19])
+    print finder.centerPiece(data[19])
