@@ -1,6 +1,13 @@
 import csv
 import sys
 
+class FeatureFinder():
+
+    # Which Player Has a Piece in the Bottom Left Position
+    def bottomLeft(self, state):
+        return state.board[0][0]
+    
+
 class BoardState():
 
     def __init__(self, board1D):
@@ -13,7 +20,7 @@ class BoardState():
         for c in range(self.columns):
             self.board.append([])
             for r in range(self.rows):
-                index = c * self.rows + (self.rows - r - 1)
+                index = c * self.rows + r
                 self.board[c].append(board1D[index])
 
     def display(self):
@@ -21,7 +28,7 @@ class BoardState():
         for r in range(self.rows):
             line = ""
             for c in range(self.columns):     
-                line += self.board[c][r] + " "
+                line += self.board[c][self.rows - r - 1] + " "
             print line
         print "\n\tWinner: {}".format(self.winner)
     
@@ -47,4 +54,8 @@ if __name__== "__main__":
         sys.exit(1)
 
     print 'Successfully Loaded {} Data Entries'.format(len(data))
- 
+
+    finder = FeatureFinder()
+
+    data[0].display()
+    print finder.bottomLeft(data[0])
