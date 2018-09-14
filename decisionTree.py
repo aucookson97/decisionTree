@@ -1,4 +1,6 @@
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree import DecisionTreeClassifier, export_graphviz
+import numpy as np
+from sklearn.model_selection import KFold
 import csv
 import sys
 
@@ -74,6 +76,18 @@ def createDecisionData(finder, dataSet):
         winner_data.append(data.winner)
     return (decision_data, winner_data)
 
+def kFoldCrossValidation(k, xData, yData):
+    xData = np.asarray(xData)
+    yData = np.asanyarray(yData)
+    kf = KFold(n_splits=k, shuffle=True)
+    X_train, Y_train, X_test, Y_test = [], [], [], []
+    for train_index, test_index in kf.split(xData):
+        X_train, X_test = xData[train_index], xData[test_index]
+        Y_train, Y_test = yData[train_index], yData[test_index]
+    clf_entropy = DecisionTreeClassifier(criterion = "entropy", random_state = 100, max_depth=3, min_samples_leaf=5)
+    clf_entropy.fit(X_train, Y_train)
+    export_graphviz(clf_entropy, out_file = 'connectFour.dot')
+
 if __name__== "__main__":
     data = []
     try:
@@ -88,7 +102,8 @@ if __name__== "__main__":
 
     decision_data, winner_data = createDecisionData(finder, data)
 
-    data[0].display()
+    #data[0].display()
+    kFoldCrossValidation(3, decision_data, winner_data)
 
     print decision_data[0]
     print winner_data[0]
