@@ -41,13 +41,13 @@ class BoardState():
                 self.board[c].append(int(board1D[index]))
 
     def display(self):
-        print ""
+        print("")
         for r in range(self.rows):
             line = ""
             for c in range(self.columns):     
                 line += str(self.board[c][self.rows - r - 1]) + " "
-            print line
-        print "\n\tWinner: {}".format(self.winner)
+            print(line)
+        print("\n\tWinner: {}".format(self.winner))
     
 
 
@@ -100,10 +100,10 @@ if __name__== "__main__":
     try:
         data = loadTrainData("trainDataSet.csv")
     except IOError:
-        print 'Error: Could not find CSV File!'
+        print('Error: Could not find CSV File!')
         sys.exit(1)
 
-    print 'Successfully Loaded {} Data Entries'.format(len(data))
+    print('Successfully Loaded {} Data Entries'.format(len(data)))
 
     finder = FeatureFinder()
 
@@ -115,5 +115,5 @@ if __name__== "__main__":
     tree = buildTree(decision_data, winner_data)
     visualizeTree(tree)
 
-    print decision_data[0]
-    print winner_data[0]
+    print(decision_data[0])
+    print(winner_data[0])
