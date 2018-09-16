@@ -3,6 +3,8 @@ import numpy as np
 from sklearn.model_selection import KFold
 import csv
 import sys
+from scipy import stats
+
 
 class FeatureFinder():
 
@@ -159,6 +161,32 @@ def createDecisionData(finder, dataSet):
         winner_data.append(data.winner)
     return (decision_data, winner_data)
 
+def createDecisionDataHoldFeature(finder, dataSet, featureHold):
+    decision_data = []
+    winner_data = []
+
+    for i in range(len(dataSet)):
+        data = dataSet[i]
+        decision_data.append([])
+
+        if featureHold != 1:
+            feature_1 = finder.bottomLeft(data)
+            decision_data[i].append(feature_1)
+        if featureHold != 2:
+            feature_2 = finder.numCenterPieces(data)
+            decision_data[i].append(feature_2)
+        if featureHold != 3:
+            feature_3 = finder.centerPiece(data)
+            decision_data[i].append(feature_3)
+        if featureHold !=4:
+            feature_4 = finder.twoInRowDiagonal(data)
+            decision_data[i].append(feature_4)
+        if featureHold !=5:
+            feature_5 = finder.twoInRowFreeSpace(data)
+            decision_data[i].append(feature_5)
+        winner_data.append(data.winner)
+    return (decision_data, winner_data)
+
 def saveOutputData(filename, data, decision_data):
 
     output_rows = []
@@ -194,7 +222,7 @@ def kFoldCrossValidation(k, xData, yData):
 
         clf = buildTree(X_train, Y_train)
         accuracy.append(clf.score(X_test, Y_test))
-    print(accuracy)
+    print(np.mean(accuracy))
 
 
 def buildTree(xData, yData):
@@ -202,8 +230,20 @@ def buildTree(xData, yData):
     clf_entropy.fit(xData, yData)
     return clf_entropy
 
-def visualizeTree(tree):
-    export_graphviz(tree, feature_names=["Bottom Left", "Center Columns", "Center Piece", "Two in Row Diagonal", "Two in a Row and Free Space"], out_file = 'connectFour.dot')
+#     export_graphviz(tree, feature_names=["Bottom Left", "Center Columns", "Center Piece", "Two in Row Diagonal", "Two in a Row and Free Space"], out_file = 'connectFour' +  number + '.dot')
+def visualizeTree(tree, number):
+    if(number == 'full'):
+        export_graphviz(tree, feature_names=["Bottom Left", "Center Columns", "Center Piece", "Two in Row Diagonal", "Two in a Row and Free Space"], out_file='connectFour' + number + '.dot')
+    if(number == 'hold1'):
+        export_graphviz(tree, feature_names=["Center Columns", "Center Piece", "Two in Row Diagonal", "Two in a Row and Free Space"], out_file = 'connectFour' +  number + '.dot')
+    if(number == 'hold2'):
+        export_graphviz(tree, feature_names=["Bottom Left", "Center Piece", "Two in Row Diagonal", "Two in a Row and Free Space"], out_file = 'connectFour' +  number + '.dot')
+    if(number == 'hold3'):
+        export_graphviz(tree, feature_names=["Bottom Left", "Center Columns", "Two in Row Diagonal", "Two in a Row and Free Space"], out_file = 'connectFour' +  number + '.dot')
+    if(number == 'hold4'):
+        export_graphviz(tree, feature_names=["Bottom Left", "Center Columns", "Center Piece", "Two in a Row and Free Space"], out_file = 'connectFour' +  number + '.dot')
+    if(number == 'hold5'):
+        export_graphviz(tree, feature_names=["Bottom Left", "Center Columns", "Center Piece", "Two in Row Diagonal"], out_file = 'connectFour' +  number + '.dot')
 
 if __name__== "__main__":
 
@@ -231,6 +271,33 @@ if __name__== "__main__":
     finder = FeatureFinder()
 
     decision_data, winner_data = createDecisionData(finder, data)
+    decision_data_hold1, winner_data_hold1 = createDecisionDataHoldFeature(finder, data, 1)
+    decision_data_hold2, winner_data_hold2 = createDecisionDataHoldFeature(finder, data, 2)
+    decision_data_hold3, winner_data_hold3 = createDecisionDataHoldFeature(finder, data, 3)
+    decision_data_hold4, winner_data_hold4 = createDecisionDataHoldFeature(finder, data, 4)
+    decision_data_hold5, winner_data_hold5 = createDecisionDataHoldFeature(finder, data, 5)
+
+    tree_full = buildTree(decision_data, winner_data)
+    tree_hold1 = buildTree(decision_data_hold1, winner_data_hold1)
+    tree_hold2 = buildTree(decision_data_hold2, winner_data_hold2)
+    tree_hold3 = buildTree(decision_data_hold3, winner_data_hold3)
+    tree_hold4 = buildTree(decision_data_hold4, winner_data_hold4)
+    tree_hold5 = buildTree(decision_data_hold5, winner_data_hold5)
+
+    prediction_full = tree_full.predict(decision_data).astype(np.int)
+    prediction_hold1 = tree_hold1.predict(decision_data_hold1).astype(np.int)
+    prediction_hold2 = tree_hold2.predict(decision_data_hold2).astype(np.int)
+    prediction_hold3 = tree_hold3.predict(decision_data_hold3).astype(np.int)
+    prediction_hold4 = tree_hold4.predict(decision_data_hold4).astype(np.int)
+    prediction_hold5 = tree_hold5.predict(decision_data_hold5).astype(np.int)
+
+    #print(type(prediction_full[0]))
+    #print (stats.ttest_ind(prediction_full, prediction_hold1))
+    #print (stats.ttest_ind(prediction_full, prediction_hold2))
+    #print (stats.ttest_ind(prediction_full, prediction_hold3))
+    #print (stats.ttest_ind(prediction_full, prediction_hold4))
+    #print (stats.ttest_ind(prediction_full, prediction_hold5))
+
 
     saveOutputData(output_file, data, decision_data)
 
@@ -238,8 +305,13 @@ if __name__== "__main__":
 
     #print (finder.twoInRowFreeSpace(data[7]))
     #print (decision_data[7])
-    kFoldCrossValidation(3, decision_data, winner_data)
+    kFoldCrossValidation(10, decision_data, winner_data)
 
-    tree = buildTree(decision_data, winner_data)
-    visualizeTree(tree)
+    visualizeTree(tree_full, 'full')
+    visualizeTree(tree_hold1, 'hold1')
+    visualizeTree(tree_hold2, 'hold2')
+    visualizeTree(tree_hold3, 'hold3')
+    visualizeTree(tree_hold4, 'hold4')
+    visualizeTree(tree_hold5, 'hold5')
+
 
