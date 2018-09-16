@@ -31,6 +31,7 @@ class BoardState():
         self.winner = board1D[len(board1D)-1]
         self.rows = 6
         self.columns = 7
+        self.board1D = board1D
 
         self.board = []
 
@@ -53,11 +54,10 @@ class BoardState():
 
 def loadTrainData(filename):
     data = []
-    with open(filename, 'rb') as csvfile:
+    with open(filename, 'r') as csvfile:
         reader = csv.reader(csvfile, delimiter=',')
-
         reader_iter = iter(reader)
-        reader_iter.next()
+        next(reader_iter)
         for entry in reader_iter:
             data.append(BoardState(entry))
     return data
@@ -76,6 +76,29 @@ def createDecisionData(finder, dataSet):
         winner_data.append(data.winner)
     return (decision_data, winner_data)
 
+def saveOutputData(filename, data, decision_data):
+
+    print (decision_data[0])
+
+    output_rows = []
+    for i in range(len(data)):
+        state = data[i]
+        output_rows.append([])
+        for piece in state.board1D:
+            output_rows[i].append(piece)
+        for feature in decision_data[i]:
+            output_rows[i].append(feature)
+
+
+    with open(filename, 'w') as csvfile:
+        writer = csv.writer(csvfile, delimiter=',', lineterminator='\n')
+
+        for row in output_rows:
+            writer.writerow(row)
+
+
+
+
 def kFoldCrossValidation(k, xData, yData):
     xData = np.asarray(xData)
     yData = np.asanyarray(yData)
@@ -87,6 +110,7 @@ def kFoldCrossValidation(k, xData, yData):
         Y_train, Y_test = yData[train_index], yData[test_index]
 
 
+
 def buildTree(xData, yData):
     clf_entropy = DecisionTreeClassifier(criterion = "entropy", random_state = 100, max_depth=3, min_samples_leaf=5)
     clf_entropy.fit(xData, yData)
@@ -96,6 +120,19 @@ def visualizeTree(tree):
     export_graphviz(tree, feature_names=["Bottom Left", "Center Columns", "Center Piece"], out_file = 'connectFour.dot')
 
 if __name__== "__main__":
+
+    input_file = ""
+    output_file = ""
+
+    try:
+        input_file, output_file = ("trainDataSet.csv", "output.csv")#sys.argv[1:3]
+    except ValueError:
+        print ('Please enter two arguments in the format \"input_file.csv output_file.csv\".')
+
+    if not '.csv' in input_file or not '.csv' in output_file:
+        print ('Error! Please Input and Output files must be .csv!')
+        sys.exit(1)
+
     data = []
     try:
         data = loadTrainData("trainDataSet.csv")
@@ -109,11 +146,13 @@ if __name__== "__main__":
 
     decision_data, winner_data = createDecisionData(finder, data)
 
-    #data[0].display()
-    #kFoldCrossValidation(3, decision_data, winner_data)
+    saveOutputData(output_file, data, decision_data)
 
-    tree = buildTree(decision_data, winner_data)
-    visualizeTree(tree)
+    # data[0].display()
+    # kFoldCrossValidation(3, decision_data, winner_data)
 
-    print(decision_data[0])
-    print(winner_data[0])
+    #tree = buildTree(decision_data, winner_data)
+    #visualizeTree(tree)
+
+    #print(decision_data[0])
+    # print(winner_data[0])
