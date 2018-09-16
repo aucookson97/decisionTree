@@ -25,12 +25,27 @@ class FeatureFinder():
     def centerPiece(self, state):
         return state.board[3][0]
 
+    def twoInRowDiagonal(self, state):
+        num_two_in_a_row_player1 = 0
+        num_two_in_a_row_player2 = 0
+        for c in range(state.columns):
+            for r in range(state.rows):
+                neighbors = state.generateNeighbors(c, r, True)
+                for n in neighbors:
+                    if state.board[c][r] == 1 and n == 1:
+                        num_two_in_a_row_player1 += 1
+                    elif state.board[c][r] == 2 and n == 2:
+                        num_two_in_a_row_player2 += 1
+        return num_two_in_a_row_player1 - num_two_in_a_row_player2
+
+
 class BoardState():
 
     def __init__(self, board1D):
         self.winner = board1D[len(board1D)-1]
         self.rows = 6
         self.columns = 7
+
         self.board1D = board1D
 
         self.board = []
@@ -49,7 +64,27 @@ class BoardState():
                 line += str(self.board[c][self.rows - r - 1]) + " "
             print(line)
         print("\n\tWinner: {}".format(self.winner))
-    
+
+    def generateNeighbors(self, c, r, diagonal=False):
+        neighbors = []
+
+        if self.checkBounds(c + 1, r + 1): neighbors.append(self.board[c + 1][r + 1])
+        if self.checkBounds(c - 1, r - 1): neighbors.append(self.board[c - 1][r - 1])
+        if self.checkBounds(c + 1, r - 1): neighbors.append(self.board[c + 1][r - 1])
+        if self.checkBounds(c - 1, r + 1): neighbors.append(self.board[c - 1][r + 1])
+
+        if diagonal:
+            return neighbors
+
+        if self.checkBounds(c, r + 1): neighbors.append(self.board[c][r + 1])
+        if self.checkBounds(c + 1, r): neighbors.append(self.board[c + 1][r])
+        if self.checkBounds(c - 1, r): neighbors.append(self.board[c - 1][r])
+        if self.checkBounds(c, r - 1): neighbors.append(self.board[c][r - 1])
+
+        return neighbors
+
+    def checkBounds(self, c, r):
+        return (c >= 0 and c < self.columns) and (r >= 0 and r < self.rows)
 
 
 def loadTrainData(filename):
@@ -72,13 +107,12 @@ def createDecisionData(finder, dataSet):
         feature_1 = finder.bottomLeft(data)
         feature_2 = finder.numCenterPieces(data)
         feature_3 = finder.centerPiece(data)
-        decision_data[i].extend((feature_1, feature_2, feature_3))
+        feature_4 = finder.twoInRowDiagonal(data)
+        decision_data[i].extend((feature_1, feature_2, feature_3, feature_4))
         winner_data.append(data.winner)
     return (decision_data, winner_data)
 
 def saveOutputData(filename, data, decision_data):
-
-    print (decision_data[0])
 
     output_rows = []
     for i in range(len(data)):
@@ -148,7 +182,10 @@ if __name__== "__main__":
 
     saveOutputData(output_file, data, decision_data)
 
-    # data[0].display()
+    data[2].display()
+
+    print (finder.twoInRowDiagonal(data[2]))
+    print (decision_data[2])
     # kFoldCrossValidation(3, decision_data, winner_data)
 
     #tree = buildTree(decision_data, winner_data)
