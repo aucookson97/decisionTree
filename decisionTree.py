@@ -38,6 +38,49 @@ class FeatureFinder():
                         num_two_in_a_row_player2 += 1
         return num_two_in_a_row_player1 - num_two_in_a_row_player2
 
+    def twoInRowFreeSpace(self, state):
+        player1_count = 0
+        player2_count = 0
+
+        for c in range(state.columns):
+            for r in range(state.rows):
+                if state.board[c][r] == 1:
+                    if state.pieceEqualTo(c, r-1, 1) and state.pieceEqualTo(c, r-2, 0):
+                        player1_count += 1
+                    if state.pieceEqualTo(c-1, r, 1) and state.pieceEqualTo(c-2, r, 0):
+                        player1_count += 1
+                    if state.pieceEqualTo(c, r+1, 1) and state.pieceEqualTo(c, r+2, 0):
+                        player1_count += 1
+                    if state.pieceEqualTo(c+1, r, 1) and state.pieceEqualTo(c+2,r , 0):
+                        player1_count += 1
+                    # if state.pieceEqualTo(c-1, r-1, 1) and state.pieceEqualTo(c-2, r-2, 0):
+                    #     player1_count += 1
+                    # if state.pieceEqualTo(c-1, r+1, 1) and state.pieceEqualTo(c-2, r+2, 0):
+                    #     player1_count += 1
+                    # if state.pieceEqualTo(c+1, r-1, 1) and state.pieceEqualTo(c+2, r-2, 0):
+                    #     player1_count += 1
+                    # if state.pieceEqualTo(c+1, r+1, 1) and state.pieceEqualTo(c+2, r+2, 0):
+                    #     player1_count += 1
+                if state.board[c][r] == 2:
+                    if state.pieceEqualTo(c, r-1, 2) and state.pieceEqualTo(c, r-2, 0):
+                        player2_count += 1
+                    if state.pieceEqualTo(c-1, r, 2) and state.pieceEqualTo(c-2, r, 0):
+                        player2_count += 1
+                    if state.pieceEqualTo(c, r+1, 2) and state.pieceEqualTo(c, r+2, 0):
+                        player2_count += 1
+                    if state.pieceEqualTo(c+1, r, 2) and state.pieceEqualTo(c+2,r , 0):
+                        player2_count += 1
+                    # if state.pieceEqualTo(c-1, r-1, 2) and state.pieceEqualTo(c-2, r-2, 0):
+                    #     player2_count += 1
+                    # if state.pieceEqualTo(c-1, r+1, 2) and state.pieceEqualTo(c-2, r+2, 0):
+                    #     player2_count += 1
+                    # if state.pieceEqualTo(c+1, r-1, 2) and state.pieceEqualTo(c+2, r-2, 0):
+                    #     player2_count += 1
+                    # if state.pieceEqualTo(c+1, r+1, 2) and state.pieceEqualTo(c+2, r+2, 0):
+                    #     player2_count += 1
+
+        return player1_count - player2_count
+
 
 class BoardState():
 
@@ -83,6 +126,9 @@ class BoardState():
 
         return neighbors
 
+    def pieceEqualTo(self, c, r, piece):
+        return self.checkBounds(c, r) and self.board[c][r] == piece
+
     def checkBounds(self, c, r):
         return (c >= 0 and c < self.columns) and (r >= 0 and r < self.rows)
 
@@ -108,7 +154,8 @@ def createDecisionData(finder, dataSet):
         feature_2 = finder.numCenterPieces(data)
         feature_3 = finder.centerPiece(data)
         feature_4 = finder.twoInRowDiagonal(data)
-        decision_data[i].extend((feature_1, feature_2, feature_3, feature_4))
+        feature_5 = finder.twoInRowFreeSpace(data)
+        decision_data[i].extend((feature_1, feature_2, feature_3, feature_4, feature_5))
         winner_data.append(data.winner)
     return (decision_data, winner_data)
 
@@ -139,19 +186,24 @@ def kFoldCrossValidation(k, xData, yData):
     kf = KFold(n_splits=k, shuffle=True)
     X_train, Y_train, X_test, Y_test = [], [], [], []
 
+    accuracy = []
+
     for train_index, test_index in kf.split(xData):
         X_train, X_test = xData[train_index], xData[test_index]
         Y_train, Y_test = yData[train_index], yData[test_index]
 
+        clf = buildTree(X_train, Y_train)
+        accuracy.append(clf.score(X_test, Y_test))
+    print(accuracy)
 
 
 def buildTree(xData, yData):
-    clf_entropy = DecisionTreeClassifier(criterion = "entropy", random_state = 100, max_depth=3, min_samples_leaf=5)
+    clf_entropy = DecisionTreeClassifier(criterion = "entropy", random_state = 100, min_samples_leaf=30)
     clf_entropy.fit(xData, yData)
     return clf_entropy
 
 def visualizeTree(tree):
-    export_graphviz(tree, feature_names=["Bottom Left", "Center Columns", "Center Piece"], out_file = 'connectFour.dot')
+    export_graphviz(tree, feature_names=["Bottom Left", "Center Columns", "Center Piece", "Two in Row Diagonal", "Two in a Row and Free Space"], out_file = 'connectFour.dot')
 
 if __name__== "__main__":
 
@@ -182,14 +234,12 @@ if __name__== "__main__":
 
     saveOutputData(output_file, data, decision_data)
 
-    data[2].display()
+    #data[7].display()
 
-    print (finder.twoInRowDiagonal(data[2]))
-    print (decision_data[2])
-    # kFoldCrossValidation(3, decision_data, winner_data)
+    #print (finder.twoInRowFreeSpace(data[7]))
+    #print (decision_data[7])
+    kFoldCrossValidation(3, decision_data, winner_data)
 
-    #tree = buildTree(decision_data, winner_data)
-    #visualizeTree(tree)
+    tree = buildTree(decision_data, winner_data)
+    visualizeTree(tree)
 
-    #print(decision_data[0])
-    # print(winner_data[0])
